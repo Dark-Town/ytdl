@@ -19,11 +19,11 @@ app.get("/download", async (req, res) => {
 
   try {
     const info = await ytdl.getInfo(videoURL);
-    const format = ytdl.chooseFormat(info.formats, { quality: "18" }); // 360p
-
+    const format = ytdl.chooseFormat(info.formats, { quality: "18" }); // 360p MP4
     res.setHeader("Content-Disposition", 'attachment; filename="video.mp4"');
     ytdl(videoURL, { format }).pipe(res);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Failed to download video." });
   }
 });
