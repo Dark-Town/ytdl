@@ -8,7 +8,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 
 app.get("/", (req, res) => {
-  res.send("YTDL Downloader API is live.");
+  res.send("YTDL API Live with Debugging");
 });
 
 app.get("/download", async (req, res) => {
@@ -20,24 +20,34 @@ app.get("/download", async (req, res) => {
 
   try {
     const info = await ytdl.getInfo(videoURL);
-    const title = info.videoDetails.title
-      .replace(/[^\w\s]/gi, "")
-      .replace(/\s+/g, "_")
-      .substring(0, 50);
+    console.log("Fetched info:", info.videoDetails.title);
 
-    const format = ytdl.chooseFormat(info.formats, { quality: "18" }); // 360p mp4
+    const format = ytdl.chooseFormat(info.formats, { quality: "18" });
+    if (!format || !format.url) {
+      console.error("No valid format found");
+      return res.status(500).json({ error: "No downloadable format found." });
+    }
+
+    const title = info.videoDetails.title.replace(/[^a-zA-Z0-9]/g, "_").substring(0, 50);
+
     res.setHeader("Content-Disposition", `attachment; filename="${title}.mp4"`);
     res.setHeader("Content-Type", "video/mp4");
-    res.flushHeaders(); // prevent timeout buffering
+    res.flushHeaders();
 
-    ytdl(videoURL, { format }).pipe(res).on("error", (err) => {
-      console.error("Stream error:", err);
-      res.status(500).end("Download failed.");
+    const stream = ytdl(videoURL, {
+      format,
+      highWaterMark: 1 << 25,
     });
 
+    stream.pipe(res);
+
+    stream.on("error", (err) => {
+      console.error("Stream error:", err.message);
+      res.status(500).end("Stream failed.");
+    });
   } catch (err) {
-    console.error("Server error:", err);
-    res.status(500).json({ error: "Something went wrong." });
+    console.error("Catch error:", err.message);
+    res.status(500).json({ error: "Download failed." });
   }
 });
 
