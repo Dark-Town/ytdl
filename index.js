@@ -19,7 +19,7 @@ app.get("/download", async (req, res) => {
       return res.status(400).json({ error: "Missing url parameter." });
     }
 
-    // Convert Shorts URL to normal format
+    // Convert Shorts to standard format
     if (videoURL.includes("youtube.com/shorts/")) {
       const id = videoURL.split("/shorts/")[1].split("?")[0];
       videoURL = `https://youtube.com/watch?v=${id}`;
@@ -33,10 +33,8 @@ app.get("/download", async (req, res) => {
     const title = info.videoDetails.title.replace(/[^\w\s]/gi, "_").substring(0, 50);
     const filename = `${title}.mp4`;
 
-    // Try to get best video+audio format (360p)
     let format = ytdl.chooseFormat(info.formats, { quality: "18" });
 
-    // Fallback: get best audio-only if no video found
     if (!format || !format.url) {
       format = ytdl.chooseFormat(info.formats, { quality: "highestaudio" });
       if (!format || !format.url) {
@@ -44,7 +42,7 @@ app.get("/download", async (req, res) => {
       }
     }
 
-    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.setHeader("Content-Disposition", `attachment; filename="\${filename}"`);
     res.setHeader("Content-Type", "video/mp4");
     res.flushHeaders();
 
@@ -62,5 +60,5 @@ app.get("/download", async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on port \${PORT}`);
 });
